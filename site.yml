@@ -11,22 +11,20 @@
 
   tasks:
 
-    ###################
-    # User Management
-    ###################
+# User
     - name: Create user {{ user }}
       user: name={{ user }}
             comment="{{ user }} user"
             shell=/bin/bash
 
     - name: Add {{ user }} to sudoers
-      template: src=templates/sudoers-user.j2
+      template: src=templates/sudoers-user
                 dest=/etc/sudoers.d/{{ user }}-sudoer
                 validate='visudo -cf %s'
 
-    - name: Add my public key to {{ user }}
-      authorized_key: user={{ user }}
-                      key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+#    - name: Add my public key to {{ user }}
+#      authorized_key: user={{ user }}
+#                      key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
 
     ###################
     # Time management
