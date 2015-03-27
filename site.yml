@@ -1,1 +1,52 @@
 #first-site.yml
+---
+- hosts: all
+  remote_user: root
+
+  vars:
+    # Username
+    user: my-test-user
+    # Timezone
+    timezone: 'Europe/Paris'
+
+  tasks:
+
+    ###################
+    # User Management
+    ###################
+    - name: Create user {{ user }}
+      user: name={{ user }}
+            comment="{{ user }} user"
+            shell=/bin/bash
+
+    - name: Add {{ user }} to sudoers
+      template: src=templates/sudoers-user.j2
+                dest=/etc/sudoers.d/{{ user }}-sudoer
+                validate='visudo -cf %s'
+
+    - name: Add my public key to {{ user }}
+      authorized_key: user={{ user }}
+                      key="{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+    ###################
+    # Time management
+    ###################
+    - name: Set local timezone
+      copy: content={{ timezone }}
+            dest=/etc/timezone
+      notify: update tzdata
+
+    - name: Install NTP (and update apt cache for the first install)
+      apt: name=ntp state=present
+           update_cache=yes
+
+    - name: Start the ntp service
+      service: name=ntp state=started enabled=true
+
+    ###################
+    # Misc. tools
+    ###################
+    - name: Install usefull system tools
+      apt: name={{ item }} state=present
+      with_items:
+        - htop
